@@ -1,0 +1,25 @@
+{
+    "name": "srako/webman-dingtalk",
+    "description": "webman-dingtalk",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "srako",
+            "email": "srakor@163.com"
+        }
+    ],
+    "require": {
+        "php": "^8.0",
+        "illuminate/support": "^10.0",
+        "webman/console": "^1.2",
+        "workerman/webman-framework": "^1.5",
+        "ext-openssl": "*",
+        "guzzlehttp/guzzle": "^7.5",
+        "playcat/queue": "^2.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Webman\\DingTalk\\": "src"
+        }
+    }
+}
