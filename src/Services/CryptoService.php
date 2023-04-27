@@ -16,12 +16,12 @@ class CryptoService
 
     private static function suiteKey()
     {
-        return config('plugin.srako.dingtalk.appkey');
+        return config('plugin.srako.dingtalk.app.appkey');
     }
 
     public static function token()
     {
-        return config('plugin.srako.dingtalk.token');
+        return config('plugin.srako.dingtalk.app.token');
     }
 
     private static function key()
@@ -31,7 +31,7 @@ class CryptoService
 
     public static function aes_key()
     {
-        return config('plugin.srako.dingtalk.aes_key');
+        return config('plugin.srako.dingtalk.app.aes_key');
     }
 
     // 加密
