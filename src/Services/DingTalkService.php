@@ -80,7 +80,7 @@ class DingTalkService
         $response = DingTalk::post('/topapi/message/corpconversation/asyncsend_v2', [
             'agent_id' => config('plugin.srako.dingtalk.app.agentid'),
             'userid_list' => $userid->join(','),
-            'msg' => $msg,
+            'msg' => json_encode($msg),
         ]);
         return $response->task_id;
 

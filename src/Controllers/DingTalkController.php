@@ -19,7 +19,6 @@ class DingTalkController
                 $request->input('nonce'),
                 $request->input('encrypt')
             );
-            var_dump($text);
 
             DingMessage::dispatch(json_decode($text, true));
 
