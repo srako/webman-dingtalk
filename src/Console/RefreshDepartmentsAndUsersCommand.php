@@ -13,7 +13,7 @@ class RefreshDepartmentsAndUsersCommand extends Command
     protected static $defaultName = 'dingtalk:RefreshDepartmentsAndUsers';
     protected static $defaultDescription = 'Refresh departments and users';
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
 
         $dept_ids = DingTalkService::departmentIds();
