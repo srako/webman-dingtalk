@@ -8,20 +8,15 @@
 
 namespace Webman\DingTalk;
 
-use Playcat\Queue\Manager;
-use Playcat\Queue\Protocols\ProducerData;
 
-class DingMessage extends ProducerData
+use Webman\RedisQueue\Redis;
+
+class DingMessage
 {
-    protected $channel = 'ding-message';
+    protected static string $channel = 'ding-message';
 
-    public function __construct(array $message)
+    public static function dispatch(array $message): bool
     {
-        $this->setQueueData($message);
-    }
-
-    public static function dispatch(array $message): ?string
-    {
-        return Manager::getInstance()->push(new self($message));
+        return Redis::send(self::$channel, $message);
     }
 }
