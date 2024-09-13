@@ -25,7 +25,6 @@ class Stream
                     'DeptId' => $data['deptId'] ?? '',
                     'EventType' => $message->headers['eventType']
                 ]);
-        });
-        $stream->run();
+        })->run();
     }
 }

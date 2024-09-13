@@ -18,7 +18,7 @@ use Workerman\Connection\AsyncTcpConnection;
 class StreamService
 {
     private array $config = [
-        'ua' => '',
+        'ua' => 'webman-dingtalk/v1.0.0',
         'subscriptions' => [
             [
                 "type" => 'EVENT',
@@ -42,6 +42,8 @@ class StreamService
     private array $callbackEvent;
 
     private $onEventReceived;
+
+    private int $retryInterval = 0;
 
     public function __construct()
     {
@@ -113,17 +115,17 @@ class StreamService
         $this->socket->websocketPingInterval = 30;
         // 当TCP完成三次握手后
         $this->socket->onConnect = function ($connection) {
-            Log::info("[webman-dingtalk][$this->dwUrl] websocket connected");
+            Log::info("[webman-dingtalk][{$connection->getRemoteURI()}] websocket connected");
         };
         // 当websocket完成握手后
-        $this->socket->onWebSocketConnect = function (AsyncTcpConnection $con, $response) {
-            Log::info("[webman-dingtalk][$this->dwUrl] websocket connected done");
+        $this->socket->onWebSocketConnect = function (AsyncTcpConnection $connection, $response) {
+            Log::info("[webman-dingtalk][{$connection->getRemoteURI()}] websocket connected done" . $response);
         };
         // 远程websocket服务器发来消息时
         $this->socket->onMessage = function ($connection, $message) {
-            Log::info("[webman-dingtalk][$this->dwUrl] websocket received message");
+            Log::info("[webman-dingtalk][{$connection->getRemoteURI()}] websocket received message");
             $msg = json_decode($message, true);
-            Log::info("[webman-dingtalk][$this->dwUrl] websocket message content", $msg);
+            Log::info("[webman-dingtalk][{$connection->getRemoteURI()}] websocket message content", $msg);
             $message = new DWClientDownStream($msg);
             switch ($message->type) {
                 case 'SYSTEM':
@@ -139,16 +141,19 @@ class StreamService
         };
         // 连接上发生错误时，一般是连接远程websocket服务器失败错误
         $this->socket->onError = function ($connection, $code, $msg) {
-            Log::error("[webman-dingtalk][$this->dwUrl] websocket error: $msg");
+            Log::error("[webman-dingtalk][{$connection->getRemoteURI()}] websocket error: $msg");
         };
 
         // 当连接远程websocket服务器的连接断开时
-        $this->socket->onClose = function ($connection) {
-            Log::error("[webman-dingtalk][$this->dwUrl] websocket connection closed and try to reconnect");
+        $this->socket->onClose = function (AsyncTcpConnection $connection) {
+            Log::error("[webman-dingtalk][{$connection->getRemoteURI()}] websocket connection closed and try to reconnect");
 
-            $this->getEndpoint();
+            if ($this->retryInterval > 5) {
+                throw new RequestException("重连次数过多，请检查网络");
+            }
             // 如果连接断开，1秒后重连
             $connection->reConnect(1);
+            $this->retryInterval += 1;
         };
         // 设置好以上各种回调后，执行连接操作
         $this->socket->connect();
