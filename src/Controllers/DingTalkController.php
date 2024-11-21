@@ -4,7 +4,7 @@ namespace Webman\DingTalk\Controllers;
 
 use support\Log;
 use support\Request;
-use Webman\DingTalk\DingMessage;
+use Webman\DingTalk\Messages\DingMessage;
 use Webman\DingTalk\Services\CryptoService;
 
 class DingTalkController

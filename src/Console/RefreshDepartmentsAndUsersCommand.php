@@ -1,11 +1,17 @@
 <?php
+/**
+ * 获取钉钉所有部门组和员工
+ * @author srako
+ * @date 2024/11/20 14:33
+ * @page http://srako.github.io
+ */
 
 namespace Webman\DingTalk\Console;
 
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Webman\DingTalk\DingMessage;
 use Webman\DingTalk\Services\DingTalkService;
 
 class RefreshDepartmentsAndUsersCommand extends Command
@@ -13,27 +19,19 @@ class RefreshDepartmentsAndUsersCommand extends Command
     protected static $defaultName = 'dingtalk:RefreshDepartmentsAndUsers';
     protected static $defaultDescription = 'Refresh departments and users';
 
+
+    protected function configure()
+    {
+        $this->addArgument('corp_id', InputArgument::OPTIONAL, '钉钉企业ID');
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $corpId = $input->getArgument('corp_id') ?: config('plugin.srako.dingtalk.app.corpid');
 
-        $dept_ids = DingTalkService::departmentIds();
-        DingMessage::dispatch([
-            'CorpId' => config('plugin.srako.dingtalk.app.corpid'),
-            'EventType' => 'org_dept_modify',
-            'DeptId' => $dept_ids
-        ]);
-        foreach ($dept_ids as $dept_id) {
-            $user_ids = DingTalkService::getDeptUserIds($dept_id);
-            if (blank($user_ids)) {
-                continue;
-            }
-            DingMessage::dispatch([
-                'CorpId' => config('plugin.srako.dingtalk.app.corpid'),
-                'EventType' => 'user_modify_org',
-                'UserId' => $user_ids
-            ]);
-        }
-
+        $output->writeln("Refresh departments and users for corp_id: $corpId");
+        $dingTalkService = new DingTalkService($corpId);
+        $dingTalkService->syncDepartmentsAndUsers();
         return 0;
     }
 }

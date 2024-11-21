@@ -18,7 +18,7 @@ use Workerman\Connection\AsyncTcpConnection;
 class StreamService
 {
     private array $config = [
-        'ua' => 'webman-dingtalk/v1.0.0',
+        'ua' => 'webman-dingtalk/v1.0.3',
         'subscriptions' => [
             [
                 "type" => 'EVENT',

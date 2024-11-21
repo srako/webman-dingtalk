@@ -8,7 +8,7 @@
 
 namespace Webman\DingTalk\Process;
 
-use Webman\DingTalk\DingMessage;
+use Webman\DingTalk\Messages\DingMessage;
 use Webman\DingTalk\Models\DWClientDownStream;
 use Webman\DingTalk\Services\StreamService;
 

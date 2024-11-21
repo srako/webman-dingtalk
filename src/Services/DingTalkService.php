@@ -2,53 +2,54 @@
 
 namespace Webman\DingTalk\Services;
 
-use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Webman\DingTalk\DingTalk;
+use Webman\DingTalk\Exceptions\RequestException;
+use Webman\DingTalk\Messages\DingSyncMessage;
 
 class DingTalkService
 {
 
+    public function __construct(private string $corpId)
+    {
+    }
+
     /**
      * 获取钉钉所有部门ID
      * @return array
+     * @throws RequestException
      */
-    public static function departmentIds(): array
+    public function departmentIds(): array
     {
-        return array_merge(self::getDepartmentAllSubIds(1), [1]);
+        return array_merge($this->getDepartmentAllSubIds(1), [1]);
     }
 
     /**
      * 获取递归下级部门ID
-     * @param $dept_id
+     * @param int $dept_id
      * @return array
+     * @throws RequestException
      */
-    public static function getDepartmentAllSubIds($dept_id): array
+    public function getDepartmentAllSubIds(int $deptId): array
     {
-        $res = DingTalk::post('/topapi/v2/department/listsubid', ['dept_id' => $dept_id]);
-        $sub_ids = $res->result->dept_id_list;
-        foreach ($sub_ids as $id) {
-            $sub_ids = array_merge($sub_ids, self::getDepartmentAllSubIds($id));
+        $res = DingTalk::corp($this->corpId)->post('/topapi/v2/department/listsubid', ['dept_id' => $deptId]);
+        $subDeptIds = $res->result->dept_id_list;
+        foreach ($subDeptIds as $id) {
+            $subDeptIds = array_merge($subDeptIds, $this->getDepartmentAllSubIds($id));
         }
-        return $sub_ids;
+        return $subDeptIds;
     }
 
     /**
      * 获取部门下UserIds
-     * @param $dept_ids
+     * @param int $deptId
      * @return array
+     * @throws RequestException
      */
-    public static function getDeptUserIds($dept_ids): array
+    public function getDeptUserIds(int $deptId): array
     {
-        $dept_ids = Arr::wrap($dept_ids);
-        $user_ids = [];
-
-        foreach ($dept_ids as $dept_id) {
-            $res = DingTalk::post('/topapi/user/listid', ['dept_id' => $dept_id]);
-            $user_ids = array_merge($user_ids, $res->result->userid_list);
-        }
-
-        return collect($user_ids)->unique()->toArray();
+        $res = DingTalk::corp($this->corpId)->post('/topapi/user/listid', ['dept_id' => $deptId]);
+        return $res->result->userid_list;
     }
 
     /**
@@ -57,8 +58,9 @@ class DingTalkService
      * @param array|string|Collection $userid
      * @param array $msg
      * @return string|null
+     * @throws RequestException
      */
-    public static function messageToUser(array|string|Collection $userid, array $msg): ?string
+    public function messageToUser(array|string|Collection $userid, array $msg): ?string
     {
         if (is_string($userid)) {
             $userid = explode(',', $userid);
@@ -77,12 +79,44 @@ class DingTalkService
             return null;
         }
 
-        $response = DingTalk::post('/topapi/message/corpconversation/asyncsend_v2', [
+        $response = DingTalk::corp($this->corpId)->post('/topapi/message/corpconversation/asyncsend_v2', [
             'agent_id' => config('plugin.srako.dingtalk.app.agentid'),
             'userid_list' => $userid->join(','),
             'msg' => json_encode($msg),
         ]);
         return $response->task_id;
+    }
 
+
+    /**
+     * 同步钉钉部门员工数据
+     * @return void
+     * @throws RequestException
+     */
+    public function syncDepartmentsAndUsers(): void
+    {
+        $deptIds = $this->departmentIds();
+
+        // 发送全部部门列表消息，用于部门差集校验
+        DingSyncMessage::dispatch(['CropId' => $this->corpId, 'EventType' => 'org_dept_all', 'DeptId' => $deptIds]);
+
+        foreach ($deptIds as $deptId) {
+            $userIds = $this->getDeptUserIds($deptId);
+            if (blank($userIds)) {
+                continue;
+            }
+            DingSyncMessage::dispatch([
+                'CorpId' => $this->corpId,
+                'EventType' => 'dept_user_all',
+                'DeptId' => [$deptId],
+                'UserId' => $userIds
+            ]);
+        }
+    }
+
+
+    public static function __callStatic(string $name, array $arguments)
+    {
+        return (new self(config('plugin.srako.dingtalk.app.corpid')))->{$name}(...$arguments);
     }
 }
