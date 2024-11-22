@@ -98,7 +98,11 @@ class DingTalkService
         $deptIds = $this->departmentIds();
 
         // 发送全部部门列表消息，用于部门差集校验
-        DingSyncMessage::dispatch(['CropId' => $this->corpId, 'EventType' => 'org_dept_all', 'DeptId' => $deptIds]);
+        DingSyncMessage::dispatch([
+            'eventCorpId' => $this->corpId,
+            'eventType' => 'org_dept_all',
+            'data' => ['deptId' => $deptIds]
+        ]);
 
         foreach ($deptIds as $deptId) {
             $userIds = $this->getDeptUserIds($deptId);
@@ -106,10 +110,9 @@ class DingTalkService
                 continue;
             }
             DingSyncMessage::dispatch([
-                'CorpId' => $this->corpId,
-                'EventType' => 'dept_user_all',
-                'DeptId' => [$deptId],
-                'UserId' => $userIds
+                'eventCorpId' => $this->corpId,
+                'eventType' => 'dept_user_all',
+                'data' => ['deptId' => [$deptId], 'userId' => $userIds]
             ]);
         }
     }

@@ -19,12 +19,7 @@ class Stream
     {
         $stream = new StreamService();
         $stream->registerAllEventListener(function (DWClientDownStream $message) {
-            $data = json_decode($message->data, true);
-            DingMessage::dispatch($data + [
-                    'UserId' => $data['userId'] ?? '',
-                    'DeptId' => $data['deptId'] ?? '',
-                    'EventType' => $message->headers['eventType']
-                ]);
+            DingMessage::dispatch($message->toArray());
         })->run();
     }
 }

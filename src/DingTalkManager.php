@@ -24,7 +24,15 @@ class DingTalkManager
         $this->config = config('plugin.srako.dingtalk.app') + $config;
     }
 
-    public function getAccessToken(): ?string
+
+    /**
+     * 获取应用token
+     * @return string|null
+     * @throws RequestException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @link https://open.dingtalk.com/document/orgapp/api-gettoken
+     */
+    public function token(): ?string
     {
         $token = Cache::get('dingtalk.' . $this->config['corpid']);
         if ($token) {
@@ -45,6 +53,32 @@ class DingTalkManager
     }
 
     /**
+     * 获取企业内部应用accessToken
+     * @return string|null
+     * @throws RequestException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @link https://open.dingtalk.com/document/orgapp/obtain-the-access_token-of-an-internal-app
+     */
+    public function accessToken(): ?string
+    {
+        $token = Cache::get('dingtalk.internal.' . $this->config['corpid']);
+        if ($token) {
+            return $token;
+        }
+        $res = $this->request("/v1.0/oauth2/accessToken", 'post', [
+            'json' => [
+                'appKey' => $this->config['appkey'],
+                'appSecret' => $this->config['appsecret']
+            ]
+        ], false);
+        if (is_null($res)) {
+            return null;
+        }
+        Cache::set('dingtalk.internal.' . $this->config['corpid'], $res->accessToken, $res->expireIn - 60);
+        return $res->accessToken;
+    }
+
+    /**
      * 发送钉钉请求
      * @param string $url
      * @param string $method
@@ -59,8 +93,8 @@ class DingTalkManager
         // 是否旧版SDK
         $isOld = Str::startsWith($url, ['/topapi', 'topapi']);
         if ($withToken) {
-            $isOld && $params['query']['access_token'] = $this->getAccessToken();
-            !$isOld && $params['headers']['x-acs-dingtalk-access-token'] = $this->getAccessToken();
+            $isOld && $params['query']['access_token'] = $this->token();
+            !$isOld && $params['headers']['x-acs-dingtalk-access-token'] = $this->token();
         }
         // 新旧版接口地址不同
         $baseUrl = $isOld ? $this->baseUrl : $this->newBaseUrl;

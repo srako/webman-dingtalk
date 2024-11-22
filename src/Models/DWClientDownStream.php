@@ -26,4 +26,9 @@ class DWClientDownStream
             }
         }
     }
+
+    public function toArray(): array
+    {
+        return $this->headers + ['data' => json_decode($this->data, true)];
+    }
 }

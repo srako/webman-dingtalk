@@ -148,7 +148,7 @@ class StreamService
         $this->socket->onClose = function (AsyncTcpConnection $connection) {
             Log::error("[webman-dingtalk][{$connection->getRemoteURI()}] websocket connection closed and try to reconnect");
 
-            if ($this->retryInterval > 5) {
+            if ($this->retryInterval > 3) {
                 throw new RequestException("重连次数过多，请检查网络");
             }
             // 如果连接断开，1秒后重连
