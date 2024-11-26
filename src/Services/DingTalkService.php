@@ -78,11 +78,10 @@ class DingTalkService
         if ($userid->isEmpty()) {
             return null;
         }
-
         $response = DingTalk::corp($this->corpId)->post('/topapi/message/corpconversation/asyncsend_v2', [
             'agent_id' => config('plugin.srako.dingtalk.app.agentid'),
             'userid_list' => $userid->join(','),
-            'msg' => json_encode($msg),
+            'msg' => $msg,
         ]);
         return $response->task_id;
     }
@@ -117,9 +116,4 @@ class DingTalkService
         }
     }
 
-
-    public static function __callStatic(string $name, array $arguments)
-    {
-        return (new self(config('plugin.srako.dingtalk.app.corpid')))->{$name}(...$arguments);
-    }
 }
