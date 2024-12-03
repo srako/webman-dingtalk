@@ -105,9 +105,6 @@ class DingTalkService
 
         foreach ($deptIds as $deptId) {
             $userIds = $this->getDeptUserIds($deptId);
-            if (blank($userIds)) {
-                continue;
-            }
             DingSyncMessage::dispatch([
                 'eventCorpId' => $this->corpId,
                 'eventType' => 'dept_user_all',
