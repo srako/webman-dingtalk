@@ -99,14 +99,18 @@ class DingTalkManager
         // 新旧版接口地址不同
         $baseUrl = $isOld ? $this->baseUrl : $this->newBaseUrl;
         $client = new Client(['base_uri' => $baseUrl]);
-        $response = $client->request($method, $url, $params);
-        if ($response->getStatusCode() === 200) {
+        try {
+            $response = $client->request($method, $url, $params);
             $string = $response->getBody()->getContents();
             Log::info("[webman-dingtalk][$method][$baseUrl][$url]" . $string);
             return json_decode($string) ?: $string;
+        } catch (\GuzzleHttp\Exception\RequestException $e) {
+            if ($e->hasResponse()) {
+                Log::error("[webman-dingtalk][$method][$baseUrl][$url]" . $e->getResponse()->getBody());
+                throw new RequestException($e->getResponse()->getBody());
+            }
+            throw new RequestException('钉钉接口非正常返回数据');
         }
-        Log::error("[webman-dingtalk][$method][$baseUrl][$url]" . $response->getBody());
-        throw new RequestException($response->getBody());
     }
 
     /**
