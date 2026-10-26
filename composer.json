@@ -9,8 +9,8 @@
         }
     ],
     "require": {
-        "php": "^8.1",
-        "illuminate/support": "^10.0",
+        "php": ">8.1",
+        "illuminate/support": ">=10.0",
         "webman/console": "^1.2||^2.1",
         "workerman/webman-framework": "^1.5||^2.0",
         "ext-openssl": "*",
